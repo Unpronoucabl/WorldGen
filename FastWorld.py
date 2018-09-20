@@ -65,14 +65,11 @@ class FastWorld(object):
                     elif POLAR == True:
                         layerlim = lat_counter
                         POLAR = False
-            
+            odd = lat_counter % 2
             lat1 = self.lat_list[lat_counter - 1]
             lat2 = self.lat_list[lat_counter]
-            odd = lat_counter % 2
             for x in range(self.width):
                 lon = (2*x/self.width - 1)*math.pi
-                if y ==90:
-                    print("P")
                 if POLAR:
                     if layerlim > 0:
                         hdist1 = 0.4*math.pi/layerlim
@@ -96,7 +93,13 @@ class FastWorld(object):
                                    math.floor(lon1) + math.floor(len(self.rand_list[lat_counter - 1])/2)],
                                    [math.ceil(lon2) + math.floor(len(self.rand_list[lat_counter])/2),
                                    math.floor(lon2) + math.floor(len(self.rand_list[lat_counter])/2)]])
-                if odd == 0:
+                if POLAR:
+                    if layerlim > 0:
+                        nodeLons[1] = nodeLons[1] + hdist1/2
+                        nodeLons[0] = nodeLons[0] + hdist1/2
+                        nodeLons[3] = nodeLons[3] + hdist2/2
+                        nodeLons[2] = nodeLons[2] + hdist2/2
+                elif odd == 1:
                     nodeLons[1] = nodeLons[1] + hdist1/2
                     nodeLons[0] = nodeLons[0] + hdist1/2
                     
@@ -104,7 +107,14 @@ class FastWorld(object):
                     nodeLons[3] = nodeLons[3] + hdist2/2
                     nodeLons[2] = nodeLons[2] + hdist2/2
                     
-                if nodeLons[1] > lon:
+                if nodeLons[0] == nodeLons[1]:
+                    nodeLons[1] = nodeLons[0] + hdist1
+                    nodeNo[0,1] = nodeNo[0,0] + 1
+                if nodeLons[3] == nodeLons[2]:
+                    nodeLons[3] = nodeLons[2] + hdist2
+                    nodeNo[1,1] = nodeNo[1,0] + 1
+                    
+                if nodeLons[1] >= lon:
                     nodeLons[0] = nodeLons[0] - hdist1
                     nodeLons[1] = nodeLons[1] - hdist1
                     nodeNo[0,0] = nodeNo[0,0] - 1
@@ -114,7 +124,7 @@ class FastWorld(object):
                     nodeLons[1] = nodeLons[1] + hdist1
                     nodeNo[0,0] = nodeNo[0,0] + 1
                     nodeNo[0,1] = nodeNo[0,1] + 1
-                if nodeLons[3] > lon:
+                if nodeLons[3] >= lon:
                     nodeLons[3] = nodeLons[3] - hdist2
                     nodeLons[2] = nodeLons[2] - hdist2
                     nodeNo[1,0] = nodeNo[1,0] - 1
@@ -124,7 +134,6 @@ class FastWorld(object):
                     nodeLons[2] = nodeLons[2] + hdist2
                     nodeNo[1,0] = nodeNo[1,0] + 1
                     nodeNo[1,1] = nodeNo[1,1] + 1
-                     
                 
                 for wrap in range(2):
                     if nodeNo[0, wrap] >= len(self.rand_list[lat_counter - 1]):
@@ -156,12 +165,14 @@ class FastWorld(object):
                     for rank in range(3):
                         if d <= self.buffer[rank, 1]:
                             for moves in range(2 - rank):
-                                self.buffer[-moves - 1, :] = self.buffer[-moves - 2, :]
+                                self.buffer[-moves - 1, :] = self.buffer[-moves - 2, :]   
+                            """if d + 2 == 2:
+                                    d = 0"""
                             self.buffer[rank,:] = [self.node_loc[n,4], d]
                             """if abs(self.node_loc[n,1]) == math.pi:
                                 self.buffer[rank,:] = [0, d]"""
                             break
-                
+                    
                 s_n = int(self.buffer[0,0])
                 t_n = int(self.buffer[1,0])
                 u_n = int(self.buffer[2,0])
@@ -171,12 +182,12 @@ class FastWorld(object):
                 A_y = self.buffer[0,1]*math.sin(A_dir)
                 
                 B_dir = math.asin(math.sin(abs(lat - self.node_loc[t_n,1]))*math.sin(self.buffer[1,1]))
-                B_x = self.buffer[0,1]*math.cos(B_dir)
-                B_y = self.buffer[0,1]*math.sin(B_dir)
+                B_x = self.buffer[1,1]*math.cos(B_dir)
+                B_y = self.buffer[1,1]*math.sin(B_dir)
                 
                 C_dir = math.asin(math.sin(abs(lat - self.node_loc[u_n,1]))*math.sin(self.buffer[2,1]))
-                C_x = self.buffer[0,1]*math.cos(C_dir)
-                C_y = self.buffer[0,1]*math.sin(C_dir)
+                C_x = self.buffer[2,1]*math.cos(C_dir)
+                C_y = self.buffer[2,1]*math.sin(C_dir)
 
                 s = np.dot([A_x, A_y],self.rand_list[int(self.node_loc[s_n,3])][int(self.node_loc[s_n,2])])
                 t = np.dot([B_x, B_y],self.rand_list[int(self.node_loc[t_n,3])][int(self.node_loc[t_n,2])])
@@ -197,23 +208,29 @@ class FastWorld(object):
                 u_dist = self.buffer[2,1]
                 
                 """
+                elif t_dist + 2 == 2:
+                    t_dist = 0
+                if u_dist + 2 ==2:
+                    u_dist = 0
+                """
+                """
                 f_s = max(3*(s_dist-1)**2 + 2*(s_dist-1)**3,0)
                 f_t = max(3*(t_dist-1)**2 + 2*(t_dist-1)**3,0)  
                 f_u = max(3*(u_dist-1)**2 + 2*(u_dist-1)**3,0)   
                 
-                """
+                
                 tot_dist = 1/(s_dist + t_dist + u_dist)
                 f_s = max(1 - 2*s_dist*tot_dist,0)
                 f_t = max(1 - 2*t_dist*tot_dist,0)
                 f_u = max(1 - 2*u_dist*tot_dist,0)
                 """
             
-                f_s = max((1 - s_dist/(t_dist+u_dist))**2,0)
-                f_t = max((1 - t_dist/(s_dist+u_dist))**2,0)
-                f_u = max((1 - u_dist/(s_dist+t_dist))**2,0)
+                f_s = max(1 - s_dist/(t_dist + u_dist),0)**2
+                f_t = max(1 - t_dist/(s_dist + u_dist),0)**2
+                f_u = max(1 - u_dist/(s_dist + t_dist),0)**2
                 """
-                
-                self.surface[y, x] = (0.5 + (f_s*s + f_t*t + f_u*u))
+                """
+                self.surface[y, x] = (0.5 + (f_s*s + f_t*t + f_u*u))*255
                 
             """End x loop"""
                 
@@ -226,10 +243,11 @@ class FastWorld(object):
                     self.surface[y,x] = 0                 
                 
 def main(width, height):
-    Iterate(width, height, 5)
+    
+    Iterate(width, height, 12)
     """
-    Just_one(width, height)"""
-
+    Just_one(width, height)
+    """
 def scale(array, depth):
     Min = array.min()
     array = (array - Min)
@@ -249,18 +267,18 @@ def Iterate(width, height, iterations):
         print(time.clock())
     final = FastWorld(width,height)
     for n in range(iterations):
-        final.surface = np.add(np.roll(final.surface, 2, axis=1), (n + 1)/weight*collector[n].surface)
+        final.surface = np.add(np.roll(final.surface, int(width/137), axis=1), (n + 1)/weight*collector[n].surface)
     final.surface = scale(final.surface, 255)
-    imageio.imwrite('Polar2.png', final.surface)
+    imageio.imwrite('Polar7.png', final.surface)
     final.Show()
     return final
     
 def Just_one(width, height):
     test = FastWorld(width, height)
-    test.World_gen_init(5)
+    test.World_gen_init(2)
     test.World_gen()
     test.surface = scale(test.surface,255)
     test.Show()
     
 if __name__ == '__main__':
-    main(541,361)
+    main(540,360)
