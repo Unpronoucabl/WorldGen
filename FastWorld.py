@@ -71,6 +71,8 @@ class FastWorld(object):
             odd = lat_counter % 2
             for x in range(self.width):
                 lon = (2*x/self.width - 1)*math.pi
+                if y ==90:
+                    print("P")
                 if POLAR:
                     if layerlim > 0:
                         hdist1 = 0.4*math.pi/layerlim
