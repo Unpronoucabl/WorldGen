@@ -8,6 +8,8 @@ Created on Sun Sep  2 15:34:51 2018
 import numpy as np
 import random
 import math
+import imageio
+import time
 import PIL
 from PIL import *
 
@@ -268,8 +270,8 @@ class Surface(object):
                          u = np.dot([[self.x_node[G_x, G_y + 1],self.y_node[G_x, G_y + 1]]], x0y1)
                          v = np.dot([[self.x_node[G_x + 1, G_y + 1],self.y_node[G_x + 1, G_y + 1]]], x1y1)
                          
-                         S_x = 3*(x0y0[0])**2 - 2*x0y0[0]
-                         S_y = 3*(x0y0[1])**2 - 2*x0y0[1]
+                         S_x = 3*(x0y0[0])**2 - 2*x0y0[0]**3
+                         S_y = 3*(x0y0[1])**2 - 2*x0y0[1]**3
                          """
                          S_x = x0y0[0]
                          S_y = x0y0[1]
@@ -277,39 +279,54 @@ class Surface(object):
                          X = G_x*self.cellsize_x + C_x
                          Y = G_y*self.cellsize_y + C_y
                          
-                         self.surface[X, Y] = (0.5+(s + S_x*(t - s)) + S_y*((u + S_x*(v - u)) - (s + S_x*(t - s))))*255
+                         t_s_weight = s + S_x*(t - s)
+                         u_v_weight = u + S_x*(v - u)
+                         
+                         self.surface[X, Y] = (0.5 + t_s_weight + S_y*(u_v_weight - t_s_weight))*255
                          """
                          self.surface[X, Y] = (0.5+(s + t + u + v)/4)*255
-                         
                          """
+                         
             
     def Show(self):
         Screen = PIL.Image.fromarray(self.surface)
         Screen.show()
+
+def scale(array, depth):
+    Min = array.min()
+    array = (array - Min)
+    Max = array.max()
+    array = array*depth/Max
+    return array
+
 def main():
-    
-    test = Surface([360,540],255)
-    """test.Perlin_gen(21,21,0)"""
+    """
+    test = Surface([1024,1024],255)
+    test.Perlin_gen(17,17,1)
     
     test.Simplex_gen()
     
     test.Show()
-    
+    """
     
     def Fractal_gen(size, init_grid_x, init_grid_y,iterations, tileable):
         collector = [None]*iterations
         tot = 0
+        time.clock()
         for n in range(iterations):
             collector[n] = Surface(size,255)
             collector[n].Perlin_gen(int((init_grid_x - 1)/(2**n) + 1),int((init_grid_y - 1)/(2**n) + 1),1)
             tot = tot + n + 1
+            print(time.clock())
         Final = Surface(size, 255)
         for n in range(iterations):
             Final.surface = Final.surface + (n+1)/tot*collector[n].surface
+        Final.surface = scale(Final.surface, 255)
         Screen = PIL.Image.fromarray(Final.surface)
+        imageio.imwrite('Torus1.png', Final.surface)
         Screen.show()
         
-    """Fractal_gen([1024,1024],129,129,7,1)"""
+    Fractal_gen([4096,4096],2049,2049,11,1)
             
 if __name__ == '__main__':
     main()

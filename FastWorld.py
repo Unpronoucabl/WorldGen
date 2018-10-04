@@ -42,9 +42,9 @@ class FastWorld(object):
         for num_lon in range(gridsize):
             self.rand_list[num_lon + gridsize + 2] = np.zeros([(gridsize + 1)*5,2])
         
-        for lats in range(len(self.rand_list)):
+        for lats in self.rand_list:
             Buf = np.zeros(self.rand_list[lats].shape)
-            for n in range(len(self.rand_list[lats])):
+            for n in self.rand_list[lats]:
                 A = random.randint(0,360)/180*math.pi
                 Buf[n,:] = [math.cos(A), math.sin(A)]
             self.rand_list[lats] = Buf 
@@ -155,7 +155,7 @@ class FastWorld(object):
                                          [nodeLons[2], lat2, nodeNo[1,0], lat_counter, 2],
                                          [nodeLons[3], lat2, nodeNo[1,1], lat_counter, 3]])
                 self.buffer = np.zeros([3,2]) + 4
-                for n in range(len(self.node_loc)):
+                for n in self.node_loc:
                     if lat > self.lat_list[1] and self.node_loc[n,4] == 1:
                         continue
                     if lat < self.lat_list[-2] and self.node_loc[n,4] == 3:
